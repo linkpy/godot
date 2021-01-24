@@ -113,6 +113,7 @@ static void _editor_init() {
 
 void register_gdscript_types() {
 	ClassDB::register_class<GDScript>();
+	ClassDB::register_class<GDScriptTokenizer>();
 
 	script_language_gd = memnew(GDScriptLanguage);
 	ScriptServer::register_language(script_language_gd);

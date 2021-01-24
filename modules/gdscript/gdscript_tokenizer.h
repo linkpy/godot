@@ -31,13 +31,19 @@
 #ifndef GDSCRIPT_TOKENIZER_H
 #define GDSCRIPT_TOKENIZER_H
 
+#include "core/object/reference.h"
 #include "core/templates/list.h"
 #include "core/templates/map.h"
 #include "core/templates/set.h"
 #include "core/templates/vector.h"
 #include "core/variant/variant.h"
 
-class GDScriptTokenizer {
+class GDScriptTokenizer : public Reference {
+	GDCLASS(GDScriptTokenizer, Reference);
+
+protected:
+	static void _bind_methods();
+
 public:
 	enum CursorPlace {
 		CURSOR_NONE,
@@ -180,6 +186,8 @@ public:
 		Token() {
 			type = EMPTY;
 		}
+
+		operator Dictionary() const;
 	};
 
 #ifdef TOOLS_ENABLED
@@ -252,6 +260,9 @@ private:
 	Token potential_identifier();
 	Token string();
 	Token annotation();
+
+	Dictionary _scan();
+	String _get_token_name(int p_token_type) const;
 
 public:
 	Token scan();

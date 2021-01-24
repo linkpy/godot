@@ -214,6 +214,30 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 	}
 }
 
+
+GDScriptTokenizer::Token::operator Dictionary() const {
+	Dictionary d;
+
+	d["type"] = static_cast<int>(type);
+	d["name"] = GDScriptTokenizer::get_token_name(type);
+	d["literal"] = literal;
+	d["start_line"] = start_line;
+	d["end_line"] = end_line;
+	d["start_column"] = start_column;
+	d["end_column"] = end_column;
+	d["leftmost_column"] = leftmost_column;
+	d["rightmost_column"] = rightmost_column;
+	d["cursor_position"] = cursor_position;
+	d["cursor_place"] = cursor_place;
+	d["source"] = source;
+	d["is_identifier"] = is_identifier();
+	d["is_node_name"] = is_node_name();
+
+	return d;
+}
+
+
+
 String GDScriptTokenizer::get_token_name(Token::Type p_token_type) {
 	ERR_FAIL_INDEX_V_MSG(p_token_type, Token::TK_MAX, "<error>", "Using token type out of the enum.");
 	return token_names[p_token_type];
@@ -1420,10 +1444,133 @@ GDScriptTokenizer::Token GDScriptTokenizer::scan() {
 	}
 }
 
-GDScriptTokenizer::GDScriptTokenizer() {
+GDScriptTokenizer::GDScriptTokenizer() : 
+		Reference() {
 #ifdef TOOLS_ENABLED
 	if (EditorSettings::get_singleton()) {
 		tab_size = EditorSettings::get_singleton()->get_setting("text_editor/indent/size");
 	}
 #endif // TOOLS_ENABLED
+}
+
+Dictionary GDScriptTokenizer::_scan() {
+	return scan();
+}
+
+String GDScriptTokenizer::_get_token_name(int p_token_type) const {
+	return get_token_name(static_cast<Token::Type>(p_token_type));
+}
+
+
+void GDScriptTokenizer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("scan"), &GDScriptTokenizer::_scan);
+	ClassDB::bind_method(D_METHOD("set_source_code"), &GDScriptTokenizer::set_source_code);
+	ClassDB::bind_method(D_METHOD("get_cursor_line"), &GDScriptTokenizer::get_cursor_line);
+	ClassDB::bind_method(D_METHOD("get_cursor_column"), &GDScriptTokenizer::get_cursor_column);
+	ClassDB::bind_method(D_METHOD("set_cursor_position", "line", "column"), &GDScriptTokenizer::set_cursor_position);
+	ClassDB::bind_method(D_METHOD("set_multiline_mode", "state"), &GDScriptTokenizer::set_multiline_mode);
+	ClassDB::bind_method(D_METHOD("is_past_cursor"), &GDScriptTokenizer::is_past_cursor);
+	ClassDB::bind_method(D_METHOD("get_token_name"), &GDScriptTokenizer::_get_token_name);
+
+	ClassDB::bind_integer_constant(get_class_static(), StringName("CursorPlace"), "CURSOR_NONE", CURSOR_NONE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("CursorPlace"), "CURSOR_BEGINNING", CURSOR_BEGINNING);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("CursorPlace"), "CURSOR_MIDDLE", CURSOR_MIDDLE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("CursorPlace"), "CURSOR_END", CURSOR_END);
+
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_EMPTY", Token::EMPTY);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ANNOTATION", Token::ANNOTATION);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_IDENTIFIER", Token::IDENTIFIER);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_LITERAL", Token::LITERAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_LESS", Token::LESS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_LESS_EQUAL", Token::LESS_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_GREATER", Token::GREATER);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_GREATER_EQUAL", Token::GREATER_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_EQUAL_EQUAL", Token::EQUAL_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BANG_EQUAL", Token::BANG_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AND", Token::AND);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_OR", Token::OR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_NOT", Token::NOT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AMPERSAND_AMPERSAND", Token::AMPERSAND_AMPERSAND);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PIPE_PIPE", Token::PIPE_PIPE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BANG", Token::BANG);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AMPERSAND", Token::AMPERSAND);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PIPE", Token::PIPE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_TILDE", Token::TILDE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CARET", Token::CARET);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_LESS_LESS", Token::LESS_LESS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_GREATER_GREATER", Token::GREATER_GREATER);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PLUS", Token::PLUS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_MINUS", Token::MINUS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_STAR", Token::STAR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SLASH", Token::SLASH);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PERCENT", Token::PERCENT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_EQUAL", Token::EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PLUS_EQUAL", Token::PLUS_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_MINUS_EQUAL", Token::MINUS_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_STAR_EQUAL", Token::STAR_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SLASH_EQUAL", Token::SLASH_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PERCENT_EQUAL", Token::PERCENT_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_LESS_LESS_EQUAL", Token::LESS_LESS_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_GREATER_GREATER_EQUAL", Token::GREATER_GREATER_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AMPERSAND_EQUAL", Token::AMPERSAND_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PIPE_EQUAL", Token::PIPE_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CARET_EQUAL", Token::CARET_EQUAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_IF", Token::IF);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ELIF", Token::ELIF);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ELSE", Token::ELSE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_FOR", Token::FOR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_WHILE", Token::WHILE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BREAK", Token::BREAK);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONTINUE", Token::CONTINUE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PASS", Token::PASS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_RETURN", Token::RETURN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_MATCH", Token::MATCH);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AS", Token::AS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ASSERT", Token::ASSERT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_AWAIT", Token::AWAIT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BREAKPOINT", Token::BREAKPOINT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CLASS", Token::CLASS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CLASS_NAME", Token::CLASS_NAME);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONST", Token::CONST);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ENUM", Token::ENUM);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_EXTENDS", Token::EXTENDS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_FUNC", Token::FUNC);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_IN", Token::IN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_IS", Token::IS);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_NAMESPACE", Token::NAMESPACE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PRELOAD", Token::PRELOAD);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SELF", Token::SELF);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SIGNAL", Token::SIGNAL);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_STATIC", Token::STATIC);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SUPER", Token::SUPER);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_TRAIT", Token::TRAIT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_VAR", Token::VAR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_VOID", Token::YIELD);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BRACKET_OPEN", Token::BRACKET_OPEN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BRACKET_CLOSE", Token::BRACKET_CLOSE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BRACE_OPEN", Token::BRACE_OPEN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BRACE_CLOSE", Token::BRACE_CLOSE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PARENTHESIS_OPEN", Token::PARENTHESIS_OPEN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PARENTHESIS_CLOSE", Token::PARENTHESIS_CLOSE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_COMMA", Token::COMMA);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_SEMICOLON", Token::SEMICOLON);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PERIOD", Token::PERIOD);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_PERIOD_PERIOD", Token::PERIOD_PERIOD);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_COLON", Token::COLON);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_DOLLAR", Token::DOLLAR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_FORWARD_ARROW", Token::FORWARD_ARROW);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_UNDERSCORE", Token::UNDERSCORE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_NEWLINE", Token::NEWLINE);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_INDENT", Token::INDENT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_DEDENT", Token::DEDENT);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONST_PI", Token::CONST_PI);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONST_TAU", Token::CONST_TAU);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONST_INF", Token::CONST_INF);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_CONST_NAN", Token::CONST_NAN);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_VCS_CONFLICT_MARKER", Token::VCS_CONFLICT_MARKER);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_BACKTICK", Token::BACKTICK);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_QUESTION_MARK", Token::QUESTION_MARK);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_ERROR", Token::ERROR);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_EOF", Token::TK_EOF);
+	ClassDB::bind_integer_constant(get_class_static(), StringName("TokenType"), "TK_MAK", Token::TK_MAX);
 }
